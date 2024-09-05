@@ -42,3 +42,4 @@ jobs:
         run: |
           kubectl set image deployment/my-node-app-deployment my-node-app=$REGISTRY/$IMAGE_NAME:latest
           kubectl rollout status deployment/my-node-app-deployment
+          
