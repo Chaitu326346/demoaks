@@ -1,0 +1,44 @@
+name: Build and Deploy Node.js to AKS
+
+on:
+  push:
+    branches:
+      - main  # Change this to the branch you want to deploy from
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build and push Docker image
+        env:
+          DOCKER_BUILDKIT: 1
+          REGISTRY: ${{ secrets.ACR_NAME }}.azurecr.io
+          IMAGE_NAME: my-node-app
+        run: |
+          docker build -t $REGISTRY/$IMAGE_NAME:latest .
+          echo ${{ secrets.ACR_PASSWORD }} | docker login $REGISTRY -u ${{ secrets.ACR_USERNAME }} --password-stdin
+          docker push $REGISTRY/$IMAGE_NAME:latest
+
+      - name: Set up Azure CLI
+        uses: azure/setup-azure-cli@v1
+
+      - name: Login to Azure
+        run: az login --service-principal -u ${{ secrets.AZURE_SP_APP_ID }} -p ${{ secrets.AZURE_SP_PASSWORD }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+
+      - name: Get AKS credentials
+        run: az aks get-credentials --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} --name ${{ secrets.AKS_CLUSTER_NAME }}
+
+      - name: Deploy to AKS
+        run: |
+          kubectl set image deployment/my-node-app-deployment my-node-app=$REGISTRY/$IMAGE_NAME:latest
+          kubectl rollout status deployment/my-node-app-deployment
