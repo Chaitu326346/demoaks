@@ -23,7 +23,7 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
           REGISTRY: ${{ secrets.ACR_NAME }}.azurecr.io
-          IMAGE_NAME: my-node-app
+          IMAGE_NAME: demoaks
         run: |
           docker build -t $REGISTRY/$IMAGE_NAME:latest .
           echo ${{ secrets.ACR_PASSWORD }} | docker login $REGISTRY -u ${{ secrets.ACR_USERNAME }} --password-stdin
@@ -40,6 +40,6 @@ jobs:
 
       - name: Deploy to AKS
         run: |
-          kubectl set image deployment/my-node-app-deployment my-node-app=$REGISTRY/$IMAGE_NAME:latest
-          kubectl rollout status deployment/my-node-app-deployment
+          kubectl set image deployment/demoaks-deployment demoaks=$REGISTRY/$IMAGE_NAME:latest
+          kubectl rollout status deployment/demoaks-deployment
           
